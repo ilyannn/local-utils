@@ -1,0 +1,1 @@
+podman run --volume "$(pwd):/work:z"  --uidmap 1001:0:1 --uidmap 0:1:1 ghcr.io/tmknom/dockerfiles/prettier $@

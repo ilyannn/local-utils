@@ -1,0 +1,61 @@
+#!/bin/bash
+
+FLAGS=()
+PATTERNS=()
+
+for arg in "$@"; do
+    if [[ $arg == -* ]]; then
+        FLAGS+=("$arg")
+    else
+        PATTERNS+=("$arg")
+    fi
+done
+
+if [ ${#FLAGS[@]} -eq 0 ]; then
+    FLAGS="--write"
+fi
+
+if printf '%s\n' "${FLAGS[@]}" | grep -q -- '--help'; then
+    echo '
+Usage: git-prettier [FLAGS] PATTERNS
+This script applies the Prettier code formatter to files known to Git, but only if the Git repository is in a clean state.
+
+  Flags:
+    --help      Show this help message and exit.
+    
+    All other flags are passed to prettier as-is. The default flag is:
+    --write     Change the files in-place
+    
+  Patterns:
+    Apply the Prettier code formatter to files matching these patterns as returned by git ls-files.
+    If no patterns are specified, the formatter is applied to all files known to Git. Prettier will let you know which files are supported.
+
+  Examples:
+
+    git-prettier --check
+    Runs Prettier for all files known to Git in the checking mode.
+
+    git-prettier "*.js" "*.css" 
+    Runs Prettier for all .js and .css files known to Git.
+
+Note: 
+  In the case of a dirty repository (there are uncommitted changes in tracked files) no action will be taken. 
+  You will need to either commit or stash your changes before running this script.
+
+'
+    exit 0
+fi
+
+git diff --quiet 
+
+if [ $? -ne 0 ]; then
+	echo "'git diff --quiet' returned non-zero. Commit the tracked files first."
+	exit 1
+fi
+
+
+echo Flags: "${FLAGS[@]}"
+echo Patterns: "${PATTERNS[@]}"
+
+git ls-files "${PATTERNS[@]}" | xargs prettier "${FLAGS[@]}"
+
